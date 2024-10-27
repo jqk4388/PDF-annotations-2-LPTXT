@@ -14,8 +14,8 @@ PDF注释导出带坐标的文本文件（[LabelPlus](https://github.com/LabelPl
 
 2.Python
 - Windows10 以上版本，exe直接运行
-- MAC系统，脚本运行
- 需要配置Python环境，pip安装需要的库
-` pip install PyMuPDF`
-执行extract_annotations_2_lptxt.py
+- MAC系统，脚本运行  
+需要配置Python环境，pip安装需要的库  
+  ` pip install PyMuPDF`
+- 执行extract_annotations_2_lptxt.py
 - 运行后弹出窗口选择一个带注释的PDF，在PDF目录下导出同名TXT文件。
