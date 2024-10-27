@@ -7,7 +7,7 @@ PDF注释导出带坐标的文本文件（[LabelPlus](https://github.com/LabelPl
 
 # 使用方法
 1. Adobe Acrobat Pro
-- 更多工具中找到动作向导
+- 更多工具中找到动作向导(新版本叫使用指引式操作)
 - 管理自定义命令
 - 导入XML命令文件
 - 打开PDF文件，在动作向导工具中点击命令**PDF注释导出LPtxt**运行，弹出窗口保存LPtxt
