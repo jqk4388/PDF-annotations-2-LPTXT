@@ -2,7 +2,7 @@
 
 PDF注释导出带坐标的文本文件（[LabelPlus](https://github.com/LabelPlus "LabelPlus")格式）
 两种实现方式
-1. **（推荐）**Adobe Acrobat：只要能运行Adobe Acrobat Pro就可以运行脚本。
+1. **（推荐）** Adobe Acrobat：只要能运行Adobe Acrobat Pro就可以运行脚本。
 2. Python：Python环境运行脚本或者Windows下使用编译的exe，但是可能会有其他不可预料的错误。
 
 # 使用方法
