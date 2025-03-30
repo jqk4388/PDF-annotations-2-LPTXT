@@ -15,39 +15,86 @@ function rectToPercentage(rect, pageWidth, pageHeight) {
     ];
 }
 
-// 定义函数以提取注释
+
+// 将富文本内容转换为纯文本，并用【】括号表示加粗的文字
+function convertRichTextToPlainText(richText) {
+    if (!Array.isArray(richText)) return "";
+
+    var plainText = "";
+
+    // 遍历 richText 数组中的每个 span
+    for (var i = 0; i < richText.length; i++) {
+        var span = richText[i];
+        var text = span.text || ""; // 获取文本内容
+
+        // 检查是否加粗,一般400以上为加粗
+        if (span.fontWeight>400) {
+            text = "【" + text + "】"; // 用【】括号包裹加粗的文字
+        }
+
+        plainText += text; // 拼接到最终的纯文本中
+    }
+    return plainText;
+}
+
+// 提取注释的主要函数
 function extractAnnotations() {
     var annotations = [];
     var totalPages = this.numPages; // 获取PDF的总页数
 
     for (var pageNum = 0; pageNum < totalPages; pageNum++) {
-        var annots = this.getAnnots(pageNum); // 获取当前页的注释
+        var pageAnnotations = extractPageAnnotations(pageNum);
+        annotations = annotations.concat(pageAnnotations);
+    }
 
-        if (annots) {
-            var pageBox = this.getPageBox("Crop", pageNum); // 获取裁切框（左、下、右、上）的坐标
-            var pageWidth = pageBox[2] - pageBox[0]; // 计算页面宽度
-            var pageHeight = pageBox[1] - pageBox[3]; // 计算页面高度
+    annotations = sortAnnotations(annotations);
+    assignAnnotationIndices(annotations);
 
-            for (var i = 0; i < annots.length; i++) {
-                var annot = annots[i];
-                var annotInfo = {
-                    page: pageNum + 1, // 页码从1开始
-                    type: annot.type, // 注释类型
-                    content: annot.contents || "", // 注释内容
-                    coordinates_percentage: rectToPercentage(annot.rect, pageWidth, pageHeight), // 注释坐标百分比
-                    creation_date: annot.creationDate || "" // 注释创建日期
-                };
-                annotations.push(annotInfo);
-            }
+    return annotations;
+}
+
+// 提取单页注释
+function extractPageAnnotations(pageNum) {
+    var annotations = [];
+    var annots = this.getAnnots(pageNum); // 获取当前页的注释
+
+    if (annots) {
+        var pageBox = this.getPageBox("Crop", pageNum); // 获取裁切框（左、下、右、上）的坐标
+        var pageWidth = pageBox[2] - pageBox[0]; // 计算页面宽度
+        var pageHeight = pageBox[1] - pageBox[3]; // 计算页面高度
+
+        for (var i = 0; i < annots.length; i++) {
+            var annot = annots[i];
+            annotations.push(processAnnotation(annot, pageNum, pageWidth, pageHeight));
         }
     }
 
-    // 排序注释
-    annotations.sort(function(a, b) {
+    return annotations;
+}
+
+// 处理单个注释
+function processAnnotation(annot, pageNum, pageWidth, pageHeight) {
+    var richContent = annot.richContents || annot.contents || ""; // 获取富文本内容或普通内容
+    var plainContent = convertRichTextToPlainText(richContent); // 转换为纯文本
+
+    return {
+        page: pageNum + 1, // 页码从1开始
+        type: annot.type, // 注释类型
+        content: plainContent, // 使用转换后的纯文本内容
+        coordinates_percentage: rectToPercentage(annot.rect, pageWidth, pageHeight), // 注释坐标百分比
+        creation_date: annot.creationDate || "" // 注释创建日期
+    };
+}
+
+// 对注释进行排序
+function sortAnnotations(annotations) {
+    return annotations.sort(function(a, b) {
         return a.page - b.page || (a.creation_date > b.creation_date ? 1 : -1);
     });
+}
 
-    // 给每个页面的注释编号
+// 为注释分配索引
+function assignAnnotationIndices(annotations) {
     var currentPage = null;
     var index = 1;
 
@@ -59,8 +106,6 @@ function extractAnnotations() {
         annotations[j].index = index; // 添加索引字段
         index++;
     }
-
-    return annotations;
 }
 
 // 转换注释到output变量
@@ -140,8 +185,41 @@ function exportAnnotationsToLPTXT(output) {
     }
 }
 
+
+// 保存Markdown文件
+function saveMarkdownFile(markdownContent) {
+    // 创建一个新的空白 PDF 文档
+    var newDoc = app.newDoc(); // 创建新的文档
+
+    // 在新文档中添加一个文本框
+    var rect = [72, 72, 540, 780]; // 定义文本框的位置和大小（左、下、右、上）
+    var field = newDoc.addField("outputField", "text", 0, rect);
+    field.textSize = 10; // 设置文本大小
+    field.multiline = true; // 允许多行文本
+    field.value = markdownContent; // 将内容写入文本框
+
+    // 保存新文档到用户文件夹
+    var tempFilePath = app.getPath("user") + "/output.pdf"; // 使用用户文件夹路径
+    newDoc.saveAs(tempFilePath); // 保存新文档
+
+    // 关闭新文档
+    newDoc.closeDoc(); // 使用 closeDoc() 方法关闭文档
+
+    // 使用 exportAsText 导出为文本文件
+    try {
+        var tempDoc = app.openDoc(tempFilePath); // 重新打开新文档
+        var txtFilePath = tempFilePath.replace(/\.pdf$/, ".txt"); // 确定导出文件的路径
+        tempDoc.exportAsText(txtFilePath); // 导出为 TXT 文件
+        app.alert("注释已成功导出为LP格式文本。", 3);
+        tempDoc.closeDoc(); // 关闭导出的文档
+    } catch (e) {
+        app.alert("导出失败：" + e.message);
+    }
+}
+
 // 主函数开始
 var annotations = extractAnnotations(); // 提取注释
 var totalPages = this.numPages;// 获取总页数
 var output = convertListToLptxt(totalPages, annotations);
-exportAnnotationsToLPTXT(output);
+// exportAnnotationsToLPTXT(output);
+saveMarkdownFile(output); // 保存为 Markdown 文件
