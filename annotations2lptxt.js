@@ -185,41 +185,8 @@ function exportAnnotationsToLPTXT(output) {
     }
 }
 
-
-// 保存Markdown文件
-function saveMarkdownFile(markdownContent) {
-    // 创建一个新的空白 PDF 文档
-    var newDoc = app.newDoc(); // 创建新的文档
-
-    // 在新文档中添加一个文本框
-    var rect = [72, 72, 540, 780]; // 定义文本框的位置和大小（左、下、右、上）
-    var field = newDoc.addField("outputField", "text", 0, rect);
-    field.textSize = 10; // 设置文本大小
-    field.multiline = true; // 允许多行文本
-    field.value = markdownContent; // 将内容写入文本框
-
-    // 保存新文档到用户文件夹
-    var tempFilePath = app.getPath("user") + "/output.pdf"; // 使用用户文件夹路径
-    newDoc.saveAs(tempFilePath); // 保存新文档
-
-    // 关闭新文档
-    newDoc.closeDoc(); // 使用 closeDoc() 方法关闭文档
-
-    // 使用 exportAsText 导出为文本文件
-    try {
-        var tempDoc = app.openDoc(tempFilePath); // 重新打开新文档
-        var txtFilePath = tempFilePath.replace(/\.pdf$/, ".txt"); // 确定导出文件的路径
-        tempDoc.exportAsText(txtFilePath); // 导出为 TXT 文件
-        app.alert("注释已成功导出为LP格式文本。", 3);
-        tempDoc.closeDoc(); // 关闭导出的文档
-    } catch (e) {
-        app.alert("导出失败：" + e.message);
-    }
-}
-
 // 主函数开始
 var annotations = extractAnnotations(); // 提取注释
 var totalPages = this.numPages;// 获取总页数
 var output = convertListToLptxt(totalPages, annotations);
-// exportAnnotationsToLPTXT(output);
-saveMarkdownFile(output); // 保存为 Markdown 文件
+exportAnnotationsToLPTXT(output);
